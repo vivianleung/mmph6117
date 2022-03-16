@@ -1,0 +1,118 @@
+---
+title: "Assignment 1: Applied Regression"
+subtitle: "MMPH 6117"
+author: "Vivian Leung (3030075815)"
+date: "17 March 2022"
+output: html_notebook
+---
+
+```{r include=FALSE}
+setwd('~/Dropbox/phd/courses/mmph6117/assignments/assignment1/')
+```
+
+__Association of invasive meningococcal disease and environmental and virologic exposure__ 
+
+Weekly counts of invasive meningococcal disease (IMD) reported cases from country A in 1997-2000 were collected and analyzed, to study associations between IMD and environmental and virologic exposure. The file ‘IMD.csv’ stored the following variables which were found to be significant factors from the literature in other places:
+
+- `flu`: influenza isolation rate from laboratory
+- `maxtemp`: weekly maximum temperature
+- `IMD`: weekly number of IMD cases
+- `pop`: population size  
+
+```{r}
+require(MASS)
+require(car)
+imd <- read.csv('imd.csv')
+```
+
+(a) Fit a poisson regression model to predict weekly IMD cases using flu and maxtemp, accounting for the increasing population size in 1997-2000. Summarize your results in a table.  [4 marks] 
+
+```{r}
+pois.imd <- glm(imd~flu+maxtemp+offset(log(pop)), data=imd, family='poisson')
+summary(pois.imd)
+```
+
+
+b) Assess the goodness of fit of the model. [1 marks]
+
+```{r}
+deviance(pois.imd)/df.residual(pois.imd)
+```
+
+The value of $\text{(resid dev)}/\text{df}$ is much larger than 1. Thus, the model fits the data poorly.  
+
+c) Quote the mean and variance of the weekly IMD cases. Is there any evidence of overdispersion? [1 marks]
+
+```{r}
+mean(imd$imd)
+var(imd$imd)
+```
+
+The variance is much larger than the mean, which is strong evidence of overdispersion.
+
+d) Fit a negative binomial regression model to predict weekly IMD cases and summarize your results in a table. [4 marks]
+
+```{r}
+nb.imd <- glm.nb(imd~flu+maxtemp+offset(log(pop)), data=imd)
+summary(nb.imd)
+```
+
+e) Assess the goodness of fit of the model. [1 marks]
+
+```{r include=FALSE}
+deviance(nb.imd)/df.residual(nb.imd)
+```
+
+The value of $\text{(resid dev)}/\text{df}$ is close to 1, meaning that the model fits well. Note that $\theta$ is small (i.e. overdispersion parameter that has accounted for the variance is large).
+
+f) Calculate the AIC for the poisson and negative binomial regression models and select the best model based on AIC and goodness of fit. [1 marks]
+
+```{r}
+AIC(pois.imd, nb.imd)
+```
+
+The negative binomial regression model has a much smaller AIC than the Poisson, so, in combination with the goodness-of-fit assessment in (c) and (e), the negative binomial regression model is better.
+
+g) Assess if the linear effects for the variables flu and maxtemp are adequate. [2 marks]
+
+```{r}
+round(exp(cbind(coef(nb.imd), confint(nb.imd))), 3)
+```
+
+According to the 95% confidence intervals, flu and maxtemp have significant effects on the outcome. (The intervals do not overlap 0.)
+
+h) Assess if there is any collinearity problem in your final model? [2 marks]
+
+<!-- TODO -->
+```{r}
+# pairs(imd)
+# vif(nb)
+```
+
+The VIF values for the variables are both below 10, so there does not appear to be any collinearity problems. This is also reflected in the pair plot (no observable correlations between flu and maxtemp).
+
+i) Assess if there is any unexplained serial correlation after fitting your final model. [2 marks]
+
+<!-- TODO -->
+```{r}
+# acf(rstudent(nb.imd))
+```
+
+
+j) Draw an overall conclusion on the findings. [3 marks]
+
+<!--TODO-->
+
+k) Based on the final model, predict the number of IMD cases in a week, if the influenza isolation rate is 0.3, with a maximum temperature of 5oC and a population of 110 million. [2 marks]
+
+<!--TODO-->
+
+l) Based on the final model, which of the conditions below will have a higher population risk of IMD, so more attention should be paid to suspected IMD cases for earlier treatment? [2 marks]
+
+  1. Influenza isolation rate = 0.1, maximum temperature = 10oC
+  2. Influenza isolation rate = 0.4, maximum temperature = -5oC
+
+<!--TODO-->
+
+
+
